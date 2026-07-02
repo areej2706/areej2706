@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AromaBlend | Your Cart & Tracking Desk</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Cart Page Specific Optimized Styles */
+        .cart-wrapper { max-width: 1100px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        @media(max-width: 768px) { .cart-wrapper { grid-template-columns: 1fr; } }
+        
+        .cart-card-item { display: flex; align-items: center; justify-content: space-between; background: white; padding: 15px 20px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 15px; border: 1px solid rgba(31,17,11,0.05); }
+        .cart-item-info { display: flex; align-items: center; gap: 15px; }
+        .cart-item-img { width: 60px; height: 60px; border-radius: 4px; background-size: cover; background-position: center; }
+        
+        .summary-box { background: #f1f0ea; padding: 25px; border-radius: 6px; border: 1px solid rgba(31,17,11,0.08); height: fit-content; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: 500; }
+        .btn-checkout { width: 100%; background: #1f110b; color: white; border: none; padding: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: 0.3s ease; margin-top: 10px; }
+        .btn-checkout:hover { background: #c38e5b; }
+        
+        /* Tracking Layout Components */
+        .tracking-card { background: white; border-radius: 6px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-top: 40px; display: none; border: 1px solid rgba(31,17,11,0.05); }
+        .stepper-container { display: flex; justify-content: space-between; position: relative; margin-top: 30px; }
+        .stepper-container::before { content: ''; position: absolute; top: 15px; left: 0; width: 100%; height: 4px; background: #e2e8f0; z-index: 1; }
+        .stepper-progress-bar { position: absolute; top: 15px; left: 0; width: 0%; height: 4px; background: #c38e5b; z-index: 2; transition: width 1s ease; }
+        .step-node { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; width: 80px; }
+        .step-circle { width: 34px; height: 34px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; color: #64748b; transition: all 0.4s ease; border: 3px solid white; }
+        .step-node.completed .step-circle { background: #1f110b; color: white; }
+        .step-node.current .step-circle { background: #c38e5b; color: white; box-shadow: 0 0 0 4px rgba(195,142,91,0.3); }
+        .step-label { font-size: 11px; font-weight: 700; text-transform: uppercase; margin-top: 10px; color: #64748b; text-align: center; }
+        .step-node.current .step-label, .step-node.completed .step-label { color: #1f110b; }
+        
+        .quantity-manager { display: flex; align-items: center; background: #f1f0ea; border-radius: 4px; overflow: hidden; }
+        .qty-btn { background: transparent; border: none; width: 30px; height: 32px; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .qty-count { padding: 0 10px; font-weight: 700; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <!-- Dynamic Header Placement Target Holder -->
+    <div id="global-header-slot"></div>
+
+    <!-- MAIN APPARATUS CORE CONTENT CONTROLLER -->
+    <main style="max-width: 1200px; margin: 40px auto; min-height: 60vh;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 style="color: #1f110b;">Your Coffee Cart Matrix</h2>
+            <p style="color: #666;">Review your selected blends, modify allocations, and initialize global dispatch routing.</p>
+        </div>
+
+        <div class="cart-wrapper" id="cart-main-layout">
+            <!-- Left Grid: Selected Items Node -->
+            <div id="cart-items-container"></div>
+
+            <!-- Right Grid: Pricing Calculations -->
+            <div class="summary-box">
+                <h3 style="margin-bottom: 20px; color: #1f110b;">Order Pricing Node</h3>
+                <div class="summary-row"><span>Items Subtotal</span><span id="subtotal-val">Rs. 0</span></div>
+                <div class="summary-row" style="color: green;"><span>Delivery Charges</span><span>FREE</span></div>
+                <hr style="border: 0; height: 1px; background: rgba(0,0,0,0.08); margin: 15px 0;">
+                <div class="summary-row" style="font-size: 18px; font-weight: 700;"><span>Total Payable</span><span id="total-val" style="color: #c38e5b;">Rs. 0</span></div>
+                <button class="btn-checkout" onclick="executePlaceOrder()">PLACE ORDER NOW</button>
+            </div>
+        </div>
+
+        <!-- TRACKING DISPATCH PANEL -->
+        <div class="tracking-card" id="tracking-system-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 15px;">
+                <div>
+                    <h3 style="color: #1f110b; margin: 0;">Live Dispatch Routing Monitor</h3>
+                    <p style="margin: 5px 0 0 0; font-size: 13px;">Order Identifier: <strong id="order-id-label" style="color: #c38e5b;">#AB-00000</strong></p>
+                </div>
+                <span id="global-status-badge" style="background: #e0f2fe; color: #0369a1; padding: 6px 12px; font-size: 11px; font-weight: 700; border-radius: 20px; text-transform: uppercase;">Processing</span>
+            </div>
+
+            <div class="stepper-container">
+                <div class="stepper-progress-bar" id="track-progress"></div>
+                <div class="step-node" id="step-1"><div class="step-circle">1</div><div class="step-label">Placed</div></div>
+                <div class="step-node" id="step-2"><div class="step-circle">2</div><div class="step-label">Brewing</div></div>
+                <div class="step-node" id="step-3"><div class="step-circle">3</div><div class="step-label">On Route</div></div>
+                <div class="step-node" id="step-4"><div class="step-circle">4</div><div class="step-label">Arrived</div></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Dynamic Footer Placement Target Holder -->
+    <div id="global-footer-slot"></div>
+
+    <!-- RUNTIME DATA INTERFACING SYSTEM -->
+    <script>
+        // 1. ASYNC COMPONENTS INJECTOR COUPLING
+        async function loadSharedWebLayouts() {
+            try {
+                // Header injection fetch routing
+                const headerResponse = await fetch('header.html');
+                if (headerResponse.ok) {
+                    document.getElementById('global-header-slot').innerHTML = await headerResponse.text();
+                }
+
+                // Footer injection fetch routing
+                const footerResponse = await fetch('footer.html');
+                if (footerResponse.ok) {
+                    document.getElementById('global-footer-slot').innerHTML = await footerResponse.text();
+                }
+
+                // Components render hone ke baad badge update execute karein
+                synchronizeHeaderCartBadge();
+            } catch (error) {
+                console.error("Component compilation injector error context:", error);
+            }
+        }
+
+        // 2. CORE REACTIVE STATE ARCHITECTURE
+        let cartData = JSON.parse(localStorage.getItem('aromaCart')) || [];
+
+        function renderCartLayout() {
+            const container = document.getElementById('cart-items-container');
+            synchronizeHeaderCartBadge(); 
+
+            if(cartData.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:50px; background:white; border-radius:6px; border:1px dashed #ccc;">
+                    <p style="font-weight:600; color:#666;">Your cart pipeline is currently empty.</p>
+                    <a href="menu.html" style="color:#c38e5b; font-weight:700; text-decoration:none;">Browse Menu to Add Items</a>
+                </div>`;
+                document.getElementById('subtotal-val').innerText = "Rs. 0";
+                document.getElementById('total-val').innerText = "Rs. 0";
+                return;
+            }
+
+            container.innerHTML = '';
+            let calculationAccumulator = 0;
+
+            cartData.forEach((item, index) => {
+                calculationAccumulator += (item.price * item.qty);
+                container.innerHTML += `
+                    <div class="cart-card-item">
+                        <div class="cart-item-info">
+                            <div class="cart-item-img" style="background-image: url('${item.img}')"></div>
+                            <div>
+                                <h4 style="margin:0; color:#1f110b;">${item.name}</h4>
+                                <small style="color:#666;">Unit Price: Rs. ${item.price}</small>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:20px;">
+                            <strong style="color:#1f110b;">Rs. ${item.price * item.qty}</strong>
+                            <div class="quantity-manager">
+                                <button class="qty-btn" onclick="updateCartQty(${index}, -1)">-</button>
+                                <span class="qty-count">${item.qty}</span>
+                                <button class="qty-btn" onclick="updateCartQty(${index}, 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('subtotal-val').innerText = "Rs. " + calculationAccumulator;
+            document.getElementById('total-val').innerText = "Rs. " + calculationAccumulator;
+        }
+
+        function updateCartQty(index, delta) {
+            cartData[index].qty += delta;
+            if(cartData[index].qty <= 0) {
+                cartData.splice(index, 1);
+            }
+            localStorage.setItem('aromaCart', JSON.stringify(cartData));
+            renderCartLayout();
+        }
+
+        function synchronizeHeaderCartBadge() {
+            const badge = document.getElementById('global-cart-counter');
+            if (!badge) return;
+            let totalItems = cartData.reduce((acc, item) => acc + item.qty, 0);
+            badge.innerText = totalItems;
+        }
+
+        function executePlaceOrder() {
+            if(cartData.length === 0) {
+                alert("Please add items to your cart system before attempting checkout routing!");
+                return;
+            }
+            
+            const generatedOrderID = "#AB-" + Math.floor(10000 + Math.random() * 90000);
+            document.getElementById('order-id-label').innerText = generatedOrderID;
+            
+            document.getElementById('cart-items-container').innerHTML = `
+                <div style="text-align:center; padding:40px; background:#f0fdf4; border-radius:6px; border:1px solid #bbf7d0; color:#166534;">
+                    <h3 style="margin:0 0 10px 0;">✔ Order Successfully Transmitted!</h3>
+                    <p style="margin:0; font-size:14px;">Your order sequence is secured. Live tracking node is initialized below.</p>
+                </div>`;
+            
+            cartData = [];
+            localStorage.setItem('aromaCart', JSON.stringify(cartData));
+            document.getElementById('subtotal-val').innerText = "Rs. 0";
+            document.getElementById('total-val').innerText = "Rs. 0";
+            synchronizeHeaderCartBadge();
+
+            triggerLiveOrderTrackingPipeline();
+        }
+
+        function triggerLiveOrderTrackingPipeline() {
+            const trackingBox = document.getElementById('tracking-system-card');
+            trackingBox.style.display = 'block';
+            trackingBox.scrollIntoView({ behavior: 'smooth' });
+
+            const states = [
+                { progress: '0%', status: 'Placed', nodes: ['step-1'], current: 'step-1' },
+                { progress: '33%', status: 'Brewing Extract Drops', nodes: ['step-1'], current: 'step-2' },
+                { progress: '66%', status: 'Out For Delivery Transit', nodes: ['step-1', 'step-2'], current: 'step-3' },
+                { progress: '100%', status: 'Arrived at Location Destination', nodes: ['step-1', 'step-2', 'step-3', 'step-4'], current: 'step-4' }
+            ];
+
+            let statePointer = 0;
+            function runStateUpdate() {
+                if (statePointer >= states.length) return;
+                const currentConfig = states[statePointer];
+                
+                document.getElementById('track-progress').style.width = currentConfig.progress;
+                document.getElementById('global-status-badge').innerText = currentConfig.status;
+
+                document.querySelectorAll('.step-node').forEach(n => n.classList.remove('completed', 'current'));
+                currentConfig.nodes.forEach(id => document.getElementById(id).classList.add('completed'));
+                document.getElementById(currentConfig.current).classList.add('current');
+
+                statePointer++;
+                setTimeout(runStateUpdate, 4000);
+            }
+            runStateUpdate();
+        }
+
+        // Entry orchestration loading sequence
+        window.onload = function() {
+            loadSharedWebLayouts();
+            renderCartLayout();
+        };
+    </script>
+</body>
+</html>
