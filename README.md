@@ -35,9 +35,3 @@ Welcome to my central portfolio repository! This workspace tracks a collection o
 * **Key Features:** Separate operational layout pages covering a main landing page, interactive product lists, and a checkout cart panel view.
 * **Tech Stack:** HTML5, CSS3, JavaScript, Tailwind CSS.
 * **Directory Link:** [`./AromaBlend`](./AromaBlend)
-
-### 6. Pencil2Pixel (FaceSketchify)
-* **Description:** An undergraduate final year engineering project designed to bridge physical hand-drawn sketches with computational imagery.
-* **Key Features:** Connects a fluid mobile environment directly to a server application to handle automated facial sketch-to-image synthesis models.
-* **Tech Stack:** Android Kotlin (Frontend), Python Flask (Backend), Generative Adversarial Networks (GANs).
-* **Directory Link:** [`./Pencil2Pixel`](./Pencil2Pixel)
